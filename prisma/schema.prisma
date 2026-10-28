@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum DietaryType {
+  VEG
+  NON_VEG
+}
+
+enum OrderStatus {
+  RECEIVED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model StoreSettings {
+  id                    String   @id @default("default")
+  storeName             String   @default("Gulmarg Cloud Kitchen")
+  isAcceptingOrders     Boolean  @default(true)
+  deliveryFee           Float    @default(40.0)
+  freeDeliveryThreshold Float    @default(499.0)
+  minOrderAmount        Float    @default(149.0)
+  taxPercentage         Float    @default(5.0)
+  whatsappNumber        String   @default("+919876543210")
+  fssaiNumber           String   @default("22726199000490")
+  serviceablePincodes   String   @default("ALL") // "ALL" or comma-separated list e.g. "190001,190008,110001"
+  updatedAt             DateTime @updatedAt
+}
+
+model User {
+  id          String    @id @default(cuid())
+  phone       String    @unique
+  name        String?
+  role        Role      @default(CUSTOMER)
+  isOnboarded Boolean   @default(false)
+  addresses   Address[]
+  orders      Order[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model OtpVerification {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  attempts  Int      @default(0) // Max 5 attempts for brute-force protection
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label       String   @default("Home")
+  fullAddress String
+  landmark    String?
+  pincode     String
+  isDefault   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  dishes    Dish[]
+  createdAt DateTime @default(now())
+}
+
+model Dish {
+  id              String      @id @default(cuid())
+  name            String
+  description     String
+  price           Float
+  packagingCharge Float       @default(15.0)
+  categoryId      String
+  category        Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  dietaryType     DietaryType @default(NON_VEG)
+  servesInfo      String      @default("Serves 1-2")
+  imageUrl        String
+  isAvailable     Boolean     @default(true) // Instant Out-of-Stock toggle
+  isSignature     Boolean     @default(false) // 5-Star Chef's Special badge
+  orderItems      OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  orderNumber      Int         @default(autoincrement())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id])
+  customerName     String
+  customerPhone    String
+  deliveryAddress  String
+  landmark         String?
+  pincode          String
+  cookingNotes     String?
+  paymentMethod    String      @default("COD") // Strictly Cash on Delivery
+  status           OrderStatus @default(RECEIVED)
+  cancellationNote String?
+  subtotal         Float
+  packagingTotal   Float       @default(0.0)
+  taxAmount        Float       @default(0.0)
+  deliveryFee      Float       @default(40.0)
+  grandTotal       Float
+  items            OrderItem[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model OrderItem {
+  id              String  @id @default(cuid())
+  orderId         String
+  order           Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  dishId          String?
+  dish            Dish?   @relation(fields: [dishId], references: [id], onDelete: SetNull)
+  dishName        String  // Immutable snapshot of dish name at order time
+  unitPrice       Float   // Immutable snapshot of dish price at order time
+  packagingCharge Float   @default(15.0) // Immutable snapshot of packaging charge at order time
+  quantity        Int
+  itemTotal       Float
+}

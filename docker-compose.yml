@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gulmarg_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gulmarg_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - gulmarg_pgdata:/var/lib/postgresql/data
+
+volumes:
+  gulmarg_pgdata:
