@@ -10,7 +10,6 @@ import "./globals.css";
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
-  weight: ["500", "600", "700", "800"],
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -18,7 +17,6 @@ const playfair = Playfair_Display({
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   variable: "--font-cormorant",
-  weight: ["500", "600", "700"],
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -26,7 +24,6 @@ const cormorant = Cormorant_Garamond({
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-jakarta",
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
